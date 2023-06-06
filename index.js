@@ -22,12 +22,13 @@ const client = new MongoClient(uri, {
 });
 
 async function run() {
-    
+
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
         const menuCollection = client.db("bistroDB").collection('menu');
         const reviewsCollection = client.db("bistroDB").collection('menu');
+        const cartCollection = client.db('bistroDB').collection('cart');
 
 
         app.get('/menu', async (req, res) => {
@@ -39,6 +40,28 @@ async function run() {
             const result = await reviewsCollection.find().toArray();
             res.send(result);
         })
+
+        // cart collection
+        
+        app.get('/carts', async (req, res) => {
+            const email = req.query.email;
+            console.log(email)
+            if (!email) {
+                res.send([]);
+            }
+            const query = { email: email };
+            const result = await cartCollection.find(query).toArray();
+            res.send(result);
+        })
+
+
+        app.post('/carts', async (req, res) => {
+            const item = req.body;
+            console.log(item);
+            const result = await cartCollection.insertOne(item);
+            res.send(result)
+        })
+
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
@@ -58,3 +81,16 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(`server is running on port ${port}`)
 })
+
+
+
+// -----------------------------------------------------------------------
+//                         naming convention
+// -----------------------------------------------------------------------
+// users: userCollection
+// app.get('/users')
+// app.get('/user/:id')
+// app.post('/users')
+// app.patch('/users/:id')
+// app.put('/users/:is')
+// app.delete('/users/:id')
