@@ -26,14 +26,26 @@ async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
+
         const reviewsCollection = client.db("bistroDB").collection('menu');
         const userCollection = client.db("bistroDB").collection('user');
         const menuCollection = client.db("bistroDB").collection('menu');
         const cartCollection = client.db('bistroDB').collection('cart');
 
         // users related apis
+        app.get('/users', async (req, res) => {
+            const result = await userCollection.find().toArray();
+            res.send(result);
+        })
+
         app.post('/users', async (req, res) => {
             const user = req.body;
+            const query = { email: user.email }
+            const existingUser = await userCollection.findOne(query);
+            console.log({ existingUser });
+            if (existingUser) {
+                return res.send({ message: 'User Already Exixts' })
+            }
             const result = await userCollection.insertOne(user);
             res.send(result);
         })
@@ -50,8 +62,7 @@ async function run() {
             res.send(result);
         })
 
-        // cart collection
-
+        // carts collection apis
         app.get('/carts', async (req, res) => {
             const email = req.query.email;
             if (!email) {
