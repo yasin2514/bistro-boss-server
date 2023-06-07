@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 require('dotenv').config()
+const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000;
 
 // middleware 
@@ -32,6 +33,15 @@ async function run() {
         const menuCollection = client.db("bistroDB").collection('menu');
         const cartCollection = client.db('bistroDB').collection('cart');
 
+
+        // jwt token
+        app.post('/jwt', (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            console.log(token);
+            res.send({ token })
+        })
+
         // users related apis
         app.get('/users', async (req, res) => {
             const result = await userCollection.find().toArray();
@@ -44,13 +54,13 @@ async function run() {
             const existingUser = await userCollection.findOne(query);
             console.log({ existingUser });
             if (existingUser) {
-                return res.send({ message: 'User Already Exixts' })
+                return res.send({ message: 'User Already Exists' })
             }
             const result = await userCollection.insertOne(user);
             res.send(result);
         });
 
-        app.patch('users/admin/:id', async (req, res) => {
+        app.patch('/users/admin/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
             const updateDoc = {
@@ -61,6 +71,14 @@ async function run() {
             const result = await userCollection.updateOne(filter, updateDoc);
             res.send(result);
 
+        });
+
+        app.delete('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id) };
+            const result = await userCollection.deleteOne(query);
+            res.send(result);
         })
 
         // menu related apis
