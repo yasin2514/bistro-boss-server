@@ -51,6 +51,7 @@ async function run() {
         const userCollection = client.db("bistroDB").collection('user');
         const menuCollection = client.db("bistroDB").collection('menu');
         const cartCollection = client.db('bistroDB').collection('cart');
+        const paymentCollection = client.db('bistroDB').collection('payment');
 
 
         // jwt token apis
@@ -186,9 +187,20 @@ async function run() {
 
         })
 
-        // payment apis
-        // create payment intent 
+        // payment related  apis
+        app.post('/payments', verifyJWT, async (req, res) => {
+            
+            const payment = req.body;
+            const insertResult = await paymentCollection.insertOne(payment);
 
+            // for delete
+            const query = { _id: { $in: payment.cartItems.map(id => new ObjectId(id)) } }
+            const deleteResult = await cartCollection.deleteMany(query);
+            res.send({ result: insertResult, deleteResult });
+
+        })
+
+        // create payment intent 
         app.post('/create-payment-intent', verifyJWT, async (req, res) => {
             const { price } = req.body;
             const amount = parseInt(price * 100);
